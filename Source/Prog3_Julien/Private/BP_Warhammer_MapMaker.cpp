@@ -50,3 +50,27 @@ void ABP_Warhammer_MapMaker::MyEditorFunction()
         GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, TEXT("Called in Editor!"));
     }
 }
+
+#if WITH_EDITOR
+void ABP_Warhammer_MapMaker::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
+{
+    Super::PostEditChangeProperty(PropertyChangedEvent);
+
+    FName PropertyName = (PropertyChangedEvent.Property != nullptr)
+        ? PropertyChangedEvent.Property->GetFName()
+        : NAME_None;
+
+    if (PropertyName == GET_MEMBER_NAME_CHECKED(FIntVector2, X) || PropertyName == GET_MEMBER_NAME_CHECKED(FIntVector2, Y))
+    {
+        MyEditorFunction();
+    }
+}
+#endif
+
+// Check if value been modified in editor
+//void ABP_Warhammer_MapMaker::OnConstruction(const FTransform& Transform)
+//{
+//    Super::OnConstruction(Transform);
+//
+//    MyEditorFunction();
+//}

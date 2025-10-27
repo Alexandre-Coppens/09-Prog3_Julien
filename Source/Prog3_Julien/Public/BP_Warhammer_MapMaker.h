@@ -27,10 +27,7 @@ public:
 	float Scale;
 
 	UPROPERTY(EditAnywhere, Category = Default)
-	int8 MapSize;
-
-	UPROPERTY(EditAnywhere, Category = Default)
-	int8 MapLength;
+	FIntVector2 MapSize;
 
 private:
 
@@ -45,4 +42,9 @@ public:
 	// Make the function callable from Blueprints
 	UFUNCTION(CallInEditor, Category = Default)
 	void MyEditorFunction();
+
+	//virtual void OnConstruction(const FTransform& Transform) override;
+#if WITH_EDITOR
+	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+#endif
 };
