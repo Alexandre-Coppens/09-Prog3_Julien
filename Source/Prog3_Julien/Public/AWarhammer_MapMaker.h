@@ -1,7 +1,7 @@
 #pragma once
 
 #include "AWarhammer_Tile.h"
-//#include "Enum_EnvironmentScale.h"
+#include "Enum_EnvironmentSize.h"
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
@@ -24,18 +24,28 @@ public:
 	UStaticMeshComponent* MapSizeDebug;
 
 
-	// Variables
+	/* Variables */
+
+	//Set the number of Tiles on the map
 	UPROPERTY(EditAnywhere, Category = Default)
 	FIntVector2 MapSize;
 
-	//UPROPERTY(EditAnywhere, Category = Default)
-	//Enum_EnvironmentScale MapScale;
+	//Change the Scale of the map
+	//Example: Near = HouseScale / Far = CityScale
+	UPROPERTY(EditAnywhere, Category = Default)
+	EEnvironmentSize MapScale;
 
+	//Set A Tile Size in Meters
 	UPROPERTY(EditAnywhere, Category = Default)
 	float TileScale;
 
+	//Set What is the type of Tile Used
 	UPROPERTY(EditAnywhere, Category = Default)
 	TSubclassOf<AWarhammer_Tile> TileClass;
+
+	//Set the Frequency of the Noice
+	UPROPERTY(EditAnywhere, Category = Default)
+	float NoiseFrequency;
 
 private:
 	UPROPERTY()
@@ -49,14 +59,14 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	// Make the function callable from Blueprints
+	// Create new Map
 	UFUNCTION(CallInEditor, Category = Default)
 	void BuildMap();
 
+	//Remove Tiles referenced in this Actor
 	UFUNCTION(CallInEditor, Category = Default)
 	void DestroyAllTiles();
 
-	//virtual void OnConstruction(const FTransform& Transform) override;
 #if WITH_EDITOR
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 #endif
@@ -67,4 +77,7 @@ private:
 
 	UFUNCTION()
 	void CreateBaseMap();
+
+	UFUNCTION()
+	uint8 GetHeightElevation(float X, float Y);
 };

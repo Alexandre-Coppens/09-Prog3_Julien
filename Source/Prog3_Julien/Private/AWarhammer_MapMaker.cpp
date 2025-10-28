@@ -24,6 +24,7 @@ AWarhammer_MapMaker::AWarhammer_MapMaker()
     
     TileScale = 0.1f;
     MapSize = FIntVector2(20,10);
+    NoiseFrequency = 1;
 }
 
 // Called when the game starts or when spawned
@@ -75,7 +76,7 @@ void AWarhammer_MapMaker::DestroyAllTiles()
 
 void AWarhammer_MapMaker::Resize() 
 {
-    FVector newSize{MapSize.X * TileScale * 0.1f, MapSize.Y * TileScale * 0.1f, 5 * 0.1f };
+    FVector newSize{MapSize.X * TileScale, MapSize.Y * TileScale, 5 };
     MapSizeDebug->SetWorldScale3D(newSize);
     BuildMap();
 }
@@ -87,6 +88,19 @@ void AWarhammer_MapMaker::CreateBaseMap()
         if (GEngine)
             GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, TEXT("Tile Class is not VALID!"));
         return;
+    }
+
+    FVector2D PerlinStartPos{ FMath::RandRange(0.0, 99999.0), FMath::RandRange(0.0, 99999.0)};
+
+    int PerlinDist;
+    switch (MapScale)
+    {
+    case EEnvironmentSize::Near:
+        PerlinDist = 0.00025;
+        break;
+    case EEnvironmentSize::Far:
+        PerlinDist = 0.00075;
+        break;
     }
 
     FVector ActorLocation = GetActorLocation();
@@ -101,7 +115,9 @@ void AWarhammer_MapMaker::CreateBaseMap()
         for (int j = 0; j < MapSize.Y; j++) {
             Location = FVector( CurrentPosition.X + TileScale * i * 100 + TileScale * 0.5f * 100,
                                 CurrentPosition.Y + TileScale * j * 100 + TileScale * 0.5f * 100,
-                                ActorLocation.Z);
+                                ActorLocation.Z - TileScale * 100);
+
+            Location.Z += GetHeightElevation(PerlinStartPos.X + Location.X, PerlinStartPos.Y + Location.Y) * TileScale * 100;
 
             AWarhammer_Tile* NewTile = GetWorld()->SpawnActor<AWarhammer_Tile>(TileClass, Location, Rotation, SpawnInfo);
             
@@ -113,4 +129,13 @@ void AWarhammer_MapMaker::CreateBaseMap()
             }
         }
     }
+}
+
+uint8 AWarhammer_MapMaker::GetHeightElevation(float X, float Y)
+{
+    float noise = FMath::PerlinNoise2D(FVector2D(X * NoiseFrequency, Y * NoiseFrequency)) + 0.5f;
+    noise = FMath::Clamp(noise, 0, 1);
+    if (noise < 0.33f) return 0;
+    if (noise < 0.66f) return 1;
+    return 2;
 }
