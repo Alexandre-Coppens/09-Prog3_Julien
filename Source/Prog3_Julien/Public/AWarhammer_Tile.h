@@ -20,9 +20,15 @@ public:
 	USceneComponent* Root;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-	UStaticMeshComponent* MapSizeDebug;
+	UStaticMeshComponent* TileMesh;
 
 	// Variables
+
+	//Set Here the different Materials (Max: 3)
+	UPROPERTY(EditAnywhere, Category = Default)
+	TArray<UMaterialInterface*> MaterialsUsed;
+
+private:
 
 protected:
 	// Called when the game starts or when spawned
@@ -31,5 +37,12 @@ protected:
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+
+	UFUNCTION()
+	void InitTile();
+
+private:
+	UFUNCTION()
+	void SetMaterial(uint8 index);
 
 };

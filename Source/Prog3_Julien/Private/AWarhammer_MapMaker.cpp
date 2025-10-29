@@ -64,6 +64,8 @@ void AWarhammer_MapMaker::BuildMap()
 
 void AWarhammer_MapMaker::DestroyAllTiles()
 {
+    double DebugStartTime = FPlatformTime::Seconds();
+
     for (AActor* Tile : TileArray)
     {
         if (Tile)
@@ -72,13 +74,22 @@ void AWarhammer_MapMaker::DestroyAllTiles()
         }
     }
     TileArray.Empty();
+
+    double DebugEndTime = FPlatformTime::Seconds();
+    double DebugTotalTime = DebugEndTime - DebugStartTime;
+    if (GEngine)
+    {
+        FString DebugMessage = FString::Printf(TEXT("Destroy execution took %f seconds (%f ms)"), DebugTotalTime, DebugTotalTime * 1000.0);
+        GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, DebugMessage);
+    }
+    UE_LOG(LogTemp, Log, TEXT("Execution took %f seconds (%f ms)"), DebugTotalTime, DebugTotalTime * 1000.0);
 }
 
 void AWarhammer_MapMaker::Resize() 
 {
     MapSize.X = FMath::Clamp(MapSize.X, 1, 50);
     MapSize.Y = FMath::Clamp(MapSize.Y, 1, 50);
-    FVector newSize{MapSize.X * TileScale, MapSize.Y * TileScale, 5 };
+    FVector newSize{MapSize.X * TileScale, MapSize.Y * TileScale, 2 };
     MapSizeDebug->SetWorldScale3D(newSize);
     BuildMap();
 }
@@ -130,14 +141,9 @@ void AWarhammer_MapMaker::CreateBaseMap()
                 NewTile->SetActorScale3D(Scale);
                 TileArray.Add(NewTile);
                 NewTile->AttachToActor(this, FAttachmentTransformRules::KeepWorldTransform);
+                NewTile->InitTile();
             }
-
-            if (GEngine)
-            {
-                FString DebugMessage = FString::Printf(TEXT("Tile n° %i of %i"), i * MapSize.X + j, MapSize.X * MapSize.Y);
-                GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Blue, DebugMessage);
-            }
-            UE_LOG(LogTemp, Log, TEXT("Tile n° %i of %i"), i * MapSize.X + j, MapSize.X + MapSize.Y);
+            UE_LOG(LogTemp, Log, TEXT("Tile n° %i of %i"), i * MapSize.X + j, MapSize.X * MapSize.Y);
         }
     }
 
@@ -145,17 +151,17 @@ void AWarhammer_MapMaker::CreateBaseMap()
     double DebugTotalTime = DebugEndTime - DebugStartTime;
     if (GEngine)
     {
-        FString DebugMessage = FString::Printf(TEXT("Execution took %f seconds (%f ms)"), DebugTotalTime, DebugTotalTime * 1000.0);
-        GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, DebugMessage);
+        FString DebugMessage = FString::Printf(TEXT("Build execution took %f seconds (%f ms)"), DebugTotalTime, DebugTotalTime * 1000.0);
+        GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, DebugMessage);
     }
     UE_LOG(LogTemp, Log, TEXT("Execution took %f seconds (%f ms)"), DebugTotalTime, DebugTotalTime * 1000.0);
 }
 
 uint8 AWarhammer_MapMaker::GetHeightElevation(float X, float Y, float Frequency)
 {
-    float noise = FMath::PerlinNoise2D(FVector2D(X * Frequency, Y * Frequency)) + 0.5f;
-    noise = FMath::Clamp(noise, 0, 1);
-    if (noise < 0.33f) return 0;
-    if (noise < 0.66f) return 1;
+    float noise = FMath::PerlinNoise2D(FVector2D(X * Frequency, Y * Frequency));
+    noise = (noise + 1) * 0.5f;
+    if (noise < 0.475f) return 0;
+    if (noise < 0.60f) return 1;
     return 2;
 }
