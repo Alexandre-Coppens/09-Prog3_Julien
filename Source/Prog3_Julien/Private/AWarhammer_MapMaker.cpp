@@ -76,6 +76,8 @@ void AWarhammer_MapMaker::DestroyAllTiles()
 
 void AWarhammer_MapMaker::Resize() 
 {
+    MapSize.X = FMath::Clamp(MapSize.X, 1, 50);
+    MapSize.Y = FMath::Clamp(MapSize.Y, 1, 50);
     FVector newSize{MapSize.X * TileScale, MapSize.Y * TileScale, 5 };
     MapSizeDebug->SetWorldScale3D(newSize);
     BuildMap();
@@ -129,6 +131,13 @@ void AWarhammer_MapMaker::CreateBaseMap()
                 TileArray.Add(NewTile);
                 NewTile->AttachToActor(this, FAttachmentTransformRules::KeepWorldTransform);
             }
+
+            if (GEngine)
+            {
+                FString DebugMessage = FString::Printf(TEXT("Tile n° %i of %i"), i * MapSize.X + j, MapSize.X * MapSize.Y);
+                GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Blue, DebugMessage);
+            }
+            UE_LOG(LogTemp, Log, TEXT("Tile n° %i of %i"), i * MapSize.X + j, MapSize.X + MapSize.Y);
         }
     }
 
