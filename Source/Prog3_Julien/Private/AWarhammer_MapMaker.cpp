@@ -92,14 +92,14 @@ void AWarhammer_MapMaker::CreateBaseMap()
 
     FVector2D PerlinStartPos{ FMath::RandRange(0.0, 99999.0), FMath::RandRange(0.0, 99999.0)};
 
-    int PerlinDist;
+    float PerlinDist;
     switch (MapScale)
     {
     case EEnvironmentSize::Near:
-        PerlinDist = 0.00025;
+        PerlinDist = 0.00025f;
         break;
     case EEnvironmentSize::Far:
-        PerlinDist = 0.00075;
+        PerlinDist = 0.00075f;
         break;
     }
 
@@ -111,13 +111,15 @@ void AWarhammer_MapMaker::CreateBaseMap()
     FVector Scale{ TileScale, TileScale, 1 };
     FActorSpawnParameters SpawnInfo;
     
+    double DebugStartTime = FPlatformTime::Seconds();
+
     for (int i = 0; i < MapSize.X; i++) {
         for (int j = 0; j < MapSize.Y; j++) {
             Location = FVector( CurrentPosition.X + TileScale * i * 100 + TileScale * 0.5f * 100,
                                 CurrentPosition.Y + TileScale * j * 100 + TileScale * 0.5f * 100,
-                                ActorLocation.Z - TileScale * 100);
+                                ActorLocation.Z - TileScale * 50);
 
-            Location.Z += GetHeightElevation(PerlinStartPos.X + Location.X, PerlinStartPos.Y + Location.Y) * TileScale * 100;
+            Location.Z += GetHeightElevation(PerlinStartPos.X + Location.X, PerlinStartPos.Y + Location.Y, PerlinDist) * TileScale * 50;
 
             AWarhammer_Tile* NewTile = GetWorld()->SpawnActor<AWarhammer_Tile>(TileClass, Location, Rotation, SpawnInfo);
             
@@ -129,11 +131,20 @@ void AWarhammer_MapMaker::CreateBaseMap()
             }
         }
     }
+
+    double DebugEndTime = FPlatformTime::Seconds();
+    double DebugTotalTime = DebugEndTime - DebugStartTime;
+    if (GEngine)
+    {
+        FString DebugMessage = FString::Printf(TEXT("Execution took %f seconds (%f ms)"), DebugTotalTime, DebugTotalTime * 1000.0);
+        GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, DebugMessage);
+    }
+    UE_LOG(LogTemp, Log, TEXT("Execution took %f seconds (%f ms)"), DebugTotalTime, DebugTotalTime * 1000.0);
 }
 
-uint8 AWarhammer_MapMaker::GetHeightElevation(float X, float Y)
+uint8 AWarhammer_MapMaker::GetHeightElevation(float X, float Y, float Frequency)
 {
-    float noise = FMath::PerlinNoise2D(FVector2D(X * NoiseFrequency, Y * NoiseFrequency)) + 0.5f;
+    float noise = FMath::PerlinNoise2D(FVector2D(X * Frequency, Y * Frequency)) + 0.5f;
     noise = FMath::Clamp(noise, 0, 1);
     if (noise < 0.33f) return 0;
     if (noise < 0.66f) return 1;

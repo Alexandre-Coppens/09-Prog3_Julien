@@ -79,5 +79,5 @@ private:
 	void CreateBaseMap();
 
 	UFUNCTION()
-	uint8 GetHeightElevation(float X, float Y);
+	uint8 GetHeightElevation(float X, float Y, float Frequency);
 };
