@@ -16,11 +16,6 @@ AWarhammer_MapMaker::AWarhammer_MapMaker()
 
     MapSizeDebug = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
     MapSizeDebug->SetupAttachment(Root);
-
-    static ConstructorHelpers::FObjectFinder<UStaticMesh> CubeMesh(TEXT("Engine/Common/BasicShapes/Cube"));
-    if (CubeMesh.Succeeded()) {
-        MapSizeDebug->SetStaticMesh(CubeMesh.Object);
-    }
     
     TileScale = 0.1f;
     MapSize = FIntVector2(20,10);

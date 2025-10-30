@@ -89,3 +89,7 @@ void AWarhammer_Tile::SetMaterial(uint8 index)
 	TileMesh->SetMaterial(0, MaterialsUsed[index]);
 }
 
+void AWarhammer_Tile::CreateRiver()
+{
+}
+

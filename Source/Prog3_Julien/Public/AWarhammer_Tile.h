@@ -45,4 +45,7 @@ private:
 	UFUNCTION()
 	void SetMaterial(uint8 index);
 
+	UFUNCTION()
+	void CreateRiver();
+
 };
