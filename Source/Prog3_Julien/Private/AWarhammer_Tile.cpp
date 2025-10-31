@@ -2,6 +2,7 @@
 
 
 #include "AWarhammer_Tile.h"
+#include "MyFunctionList.h"
 
 // Sets default values
 AWarhammer_Tile::AWarhammer_Tile()
@@ -36,13 +37,8 @@ void AWarhammer_Tile::InitTile()
 
 	if (!Parent)
 	{
-		if (GEngine)
-		{
-			FString DebugMessage = FString::Printf(TEXT("Tile has no Parent Actor"));
-			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, DebugMessage);
-		}
-		UE_LOG(LogTemp, Log, TEXT("Tile has no Parent Actor"));
-
+		FString DebugMessage = FString::Printf(TEXT("Tile has no Parent Actor"));
+		MyFunctionList::DebugPrint(DebugMessage);
 		return;
 	}
 
@@ -60,17 +56,25 @@ void AWarhammer_Tile::InitTile()
 	}
 }
 
+void AWarhammer_Tile::SetRiver(float ZPos)
+{
+	FVector ActorLocation = GetActorLocation();
+	SetActorLocation(FVector(ActorLocation.X, ActorLocation.Y, ZPos));
+
+	if (!RiverMaterial) 
+	{
+		FString DebugMessage = FString::Printf(TEXT("Please Add a River Material"));
+		MyFunctionList::DebugPrint(DebugMessage);
+	}
+	TileMesh->SetMaterial(0, RiverMaterial);
+}
+
 void AWarhammer_Tile::SetMaterial(uint8 index)
 {
 	if (MaterialsUsed.Num() == 0)
 	{
-		if (GEngine)
-		{
-			FString DebugMessage = FString::Printf(TEXT("Please Add at least 1 Material to Tile"));
-			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, DebugMessage);
-		}
-		UE_LOG(LogTemp, Log, TEXT("Please Add at least 1 Material to Tile"));
-
+		FString DebugMessage = FString::Printf(TEXT("Please Add at least 1 Material to Tile"));
+		MyFunctionList::DebugPrint(DebugMessage);
 		return;
 	}
 
@@ -88,8 +92,3 @@ void AWarhammer_Tile::SetMaterial(uint8 index)
 
 	TileMesh->SetMaterial(0, MaterialsUsed[index]);
 }
-
-void AWarhammer_Tile::CreateRiver()
-{
-}
-

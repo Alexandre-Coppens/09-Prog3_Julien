@@ -28,6 +28,10 @@ public:
 	UPROPERTY(EditAnywhere, Category = Default)
 	TArray<UMaterialInterface*> MaterialsUsed;
 
+	//Set Here the River Material 
+	UPROPERTY(EditAnywhere, Category = Default)
+	UMaterialInterface* RiverMaterial;
+
 private:
 
 protected:
@@ -41,11 +45,10 @@ public:
 	UFUNCTION()
 	void InitTile();
 
+	UFUNCTION()
+	void SetRiver(float ZPos);
+
 private:
 	UFUNCTION()
 	void SetMaterial(uint8 index);
-
-	UFUNCTION()
-	void CreateRiver();
-
 };

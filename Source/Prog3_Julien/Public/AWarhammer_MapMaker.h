@@ -2,6 +2,7 @@
 
 #include "AWarhammer_Tile.h"
 #include "Enum_EnvironmentSize.h"
+#include "FRowArray.h"
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
@@ -49,7 +50,7 @@ public:
 
 private:
 	UPROPERTY()
-	TArray<AWarhammer_Tile*> TileArray;
+	TArray<FRowArray> TileArray;
 
 protected:
 	// Called when the game starts or when spawned
@@ -80,4 +81,7 @@ private:
 
 	UFUNCTION()
 	uint8 GetHeightElevation(float X, float Y, float Frequency);
+
+	UFUNCTION()
+	void CreateRiver();
 };

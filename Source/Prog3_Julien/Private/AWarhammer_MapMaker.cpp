@@ -2,6 +2,7 @@
 
 
 #include "AWarhammer_MapMaker.h"
+#include "MyFunctionList.h"
 
 #include "Components/StaticMeshComponent.h"
 
@@ -55,29 +56,30 @@ void AWarhammer_MapMaker::BuildMap()
 {
     DestroyAllTiles();
     CreateBaseMap();
+    CreateRiver();
 }
 
 void AWarhammer_MapMaker::DestroyAllTiles()
 {
     double DebugStartTime = FPlatformTime::Seconds();
 
-    for (AActor* Tile : TileArray)
+    for (FRowArray Row : TileArray)
     {
-        if (Tile)
+        for (AActor* Tile : Row.RowArray)
         {
-            Tile->Destroy();
+            if (Tile)
+            {
+                Tile->Destroy();
+            }
         }
     }
     TileArray.Empty();
 
     double DebugEndTime = FPlatformTime::Seconds();
     double DebugTotalTime = DebugEndTime - DebugStartTime;
-    if (GEngine)
-    {
-        FString DebugMessage = FString::Printf(TEXT("Destroy execution took %f seconds (%f ms)"), DebugTotalTime, DebugTotalTime * 1000.0);
-        GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, DebugMessage);
-    }
-    UE_LOG(LogTemp, Log, TEXT("Execution took %f seconds (%f ms)"), DebugTotalTime, DebugTotalTime * 1000.0);
+
+    FString DebugMessage = FString::Printf(TEXT("Destroy execution took %f seconds (%f ms)"), DebugTotalTime, DebugTotalTime * 1000.0);
+    MyFunctionList::DebugPrint(DebugMessage);
 }
 
 void AWarhammer_MapMaker::Resize() 
@@ -93,9 +95,8 @@ void AWarhammer_MapMaker::CreateBaseMap()
 {
     if (!TileClass->IsValidLowLevelFast())
     {
-        if (GEngine)
-            GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, TEXT("Tile Class is not VALID!"));
-        return;
+        FString DebugMessage = FString::Printf(TEXT("Tile Class is not VALID!"));
+        MyFunctionList::DebugPrint(DebugMessage);
     }
 
     FVector2D PerlinStartPos{ FMath::RandRange(0.0, 99999.0), FMath::RandRange(0.0, 99999.0)};
@@ -116,12 +117,13 @@ void AWarhammer_MapMaker::CreateBaseMap()
     
     FVector Location{ 0, 0, 0 };
     FRotator Rotation = FRotator::ZeroRotator;
-    FVector Scale{ TileScale, TileScale, 1 };
+    FVector Scale{ TileScale, TileScale, TileScale };
     FActorSpawnParameters SpawnInfo;
     
     double DebugStartTime = FPlatformTime::Seconds();
 
     for (int i = 0; i < MapSize.X; i++) {
+        FRowArray row;
         for (int j = 0; j < MapSize.Y; j++) {
             Location = FVector( CurrentPosition.X + TileScale * i * 100 + TileScale * 0.5f * 100,
                                 CurrentPosition.Y + TileScale * j * 100 + TileScale * 0.5f * 100,
@@ -134,22 +136,20 @@ void AWarhammer_MapMaker::CreateBaseMap()
             if (NewTile)
             {
                 NewTile->SetActorScale3D(Scale);
-                TileArray.Add(NewTile);
+                row.RowArray.Add(NewTile);
                 NewTile->AttachToActor(this, FAttachmentTransformRules::KeepWorldTransform);
                 NewTile->InitTile();
             }
             UE_LOG(LogTemp, Log, TEXT("Tile n° %i of %i"), i * MapSize.X + j, MapSize.X * MapSize.Y);
         }
+        TileArray.Add(row);
     }
 
     double DebugEndTime = FPlatformTime::Seconds();
     double DebugTotalTime = DebugEndTime - DebugStartTime;
-    if (GEngine)
-    {
-        FString DebugMessage = FString::Printf(TEXT("Build execution took %f seconds (%f ms)"), DebugTotalTime, DebugTotalTime * 1000.0);
-        GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, DebugMessage);
-    }
-    UE_LOG(LogTemp, Log, TEXT("Execution took %f seconds (%f ms)"), DebugTotalTime, DebugTotalTime * 1000.0);
+
+    FString DebugMessage = FString::Printf(TEXT("Build execution took %f seconds (%f ms)"), DebugTotalTime, DebugTotalTime * 1000.0);
+    MyFunctionList::DebugPrint(DebugMessage);
 }
 
 uint8 AWarhammer_MapMaker::GetHeightElevation(float X, float Y, float Frequency)
@@ -159,4 +159,16 @@ uint8 AWarhammer_MapMaker::GetHeightElevation(float X, float Y, float Frequency)
     if (noise < 0.475f) return 0;
     if (noise < 0.60f) return 1;
     return 2;
+}
+
+void AWarhammer_MapMaker::CreateRiver() 
+{
+    uint8 RiverX = ceilf(MapSize.X * 0.5f) + roundf(FMath::RandRange(MapSize.X * -0.125f, MapSize.X * 0.125f));
+    uint8 RiverY = 0;
+    float RiverZ = GetActorLocation().Z - TileScale * 100;
+
+    for (int i = 0; i < MapSize.Y; i++)
+    {
+        TileArray[RiverX].RowArray[i]->SetRiver(RiverZ - TileScale * 50 * i);
+    }
 }
