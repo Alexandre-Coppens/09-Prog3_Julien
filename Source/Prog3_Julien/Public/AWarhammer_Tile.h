@@ -46,7 +46,7 @@ public:
 	void InitTile();
 
 	UFUNCTION()
-	void SetRiver(float ZPos);
+	void SetRiver();
 
 private:
 	UFUNCTION()

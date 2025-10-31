@@ -48,9 +48,16 @@ public:
 	UPROPERTY(EditAnywhere, Category = Default)
 	float NoiseFrequency;
 
+	//Number of Rivers on the map
+	UPROPERTY(EditAnywhere, meta = (ClampMin = 0, ClampMax = 5), Category = Default)
+	uint8 RiverNumber;
+
 private:
 	UPROPERTY()
 	TArray<FRowArray> TileArray;
+
+	UPROPERTY()
+	float MeterTileScale;
 
 protected:
 	// Called when the game starts or when spawned
@@ -65,6 +72,10 @@ public:
 	void BuildMap();
 
 	//Remove Tiles referenced in this Actor
+	UFUNCTION(CallInEditor, Category = Default)
+	void EmptyTileList();
+
+	//Destroy ALL Tiles in Level
 	UFUNCTION(CallInEditor, Category = Default)
 	void DestroyAllTiles();
 

@@ -35,6 +35,8 @@ void AWarhammer_Tile::InitTile()
 {
 	AActor* Parent = GetAttachParentActor();
 
+	TileMesh->SetRelativeLocation(FVector(0, 0, TileMesh->GetRelativeScale3D().Z * 50.0f));
+
 	if (!Parent)
 	{
 		FString DebugMessage = FString::Printf(TEXT("Tile has no Parent Actor"));
@@ -42,11 +44,13 @@ void AWarhammer_Tile::InitTile()
 		return;
 	}
 
-	if (GetActorLocation().Z < Parent->GetActorLocation().Z)
+	FVector ActorScale = GetActorScale();
+
+	if (ActorScale.Z == 1.5f * ActorScale.X)
 	{
 		SetMaterial(0);
 	}
-	else if (GetActorLocation().Z == Parent->GetActorLocation().Z)
+	else if (ActorScale.Z == 2.0f * ActorScale.X)
 	{
 		SetMaterial(1);
 	}
@@ -56,10 +60,11 @@ void AWarhammer_Tile::InitTile()
 	}
 }
 
-void AWarhammer_Tile::SetRiver(float ZPos)
+void AWarhammer_Tile::SetRiver()
 {
-	FVector ActorLocation = GetActorLocation();
-	SetActorLocation(FVector(ActorLocation.X, ActorLocation.Y, ZPos));
+	FVector ActorScale = GetActorScale();
+	TileMesh->SetWorldScale3D(FVector(ActorScale.X, ActorScale.Y, ActorScale.X));
+	TileMesh->SetRelativeLocation(FVector(0, 0, TileMesh->GetRelativeScale3D().Z * 50.0f));
 
 	if (!RiverMaterial) 
 	{
