@@ -3,6 +3,7 @@
 
 #include "AWarhammer_MapMaker.h"
 #include "MyFunctionList.h"
+#include "Enum_TileType.h"
 
 #include "Kismet/GameplayStatics.h"
 #include "Components/StaticMeshComponent.h"
@@ -61,6 +62,7 @@ void AWarhammer_MapMaker::BuildMap()
     {
         CreateRiver();
     }
+    GetAllCenters();
     for (int i = 0; i < PathNumber; i++)
     {
         CreatePath();
@@ -151,11 +153,11 @@ void AWarhammer_MapMaker::CreateBaseMap()
     
     double DebugStartTime = FPlatformTime::Seconds();
 
-    for (int i = 0; i < MapSize.X; i++) {
+    for (int i = 0; i < MapSize.Y; i++) {
         FRowArray row;
-        for (int j = 0; j < MapSize.Y; j++) {
-            Location = FVector( CurrentPosition.X + MeterTileScale * i + MeterTileScale * 0.5f,
-                                CurrentPosition.Y + MeterTileScale * j + MeterTileScale * 0.5f,
+        for (int j = 0; j < MapSize.X; j++) {
+            Location = FVector( CurrentPosition.X + MeterTileScale * j + MeterTileScale * 0.5f,
+                                CurrentPosition.Y + MeterTileScale * i + MeterTileScale * 0.5f,
                                 ActorLocation.Z - MapSizeDebug->GetRelativeScale3D().Z * MeterTileScale * 0.5f);
 
             Scale.Z = TileScale + TileScale * GetHeightElevation(PerlinStartPos.X + Location.X, PerlinStartPos.Y + Location.Y, PerlinDist) * 0.5f;
@@ -170,6 +172,7 @@ void AWarhammer_MapMaker::CreateBaseMap()
                 NewTile->InitTile();
             }
             UE_LOG(LogTemp, Log, TEXT("Tile n° %i of %i"), i * MapSize.X + j, MapSize.X * MapSize.Y);
+
         }
         TileArray.Add(row);
     }
@@ -190,12 +193,13 @@ uint8 AWarhammer_MapMaker::GetHeightElevation(float X, float Y, float Frequency)
     return 3;
 }
 
+//River is Top -> Bottom
 void AWarhammer_MapMaker::CreateRiver() 
 {
     uint8 RiverX = ceilf(MapSize.X * 0.5f) + roundf(FMath::RandRange(MapSize.X * -0.125f, MapSize.X * 0.125f));
     uint8 RiverY = 0;
 
-    TileArray[RiverX].RowArray[RiverY]->SetRiver();
+    TileArray[RiverY].RowArray[RiverX]->SetRiver();
 
     uint8 random;
     bool RiverEnded = false;
@@ -217,18 +221,19 @@ void AWarhammer_MapMaker::CreateRiver()
             break;
         }
 
-        TileArray[RiverX].RowArray[RiverY]->SetRiver();
+        TileArray[RiverY].RowArray[RiverX]->SetRiver();
 
         if (RiverY == MapSize.Y - 1) RiverEnded = true;
     }
 }
 
+//Path is Left -> Right
 void AWarhammer_MapMaker::CreatePath()
 {
-    uint8 RiverX = ceilf(roundf(FMath::RandRange(MapSize.X * 0.1f, MapSize.X * 0.9f)));
-    uint8 RiverY = 0;
+    uint8 PathY = ceilf(roundf(FMath::RandRange(MapSize.Y * 0.1f, MapSize.Y * 0.9f)));
+    uint8 PathX = 0;
 
-    TileArray[RiverY].RowArray[RiverX]->SetPath();
+    TileArray[PathY].RowArray[PathX]->SetPath();
 
     uint8 random;
     bool RiverEnded = false;
@@ -238,20 +243,117 @@ void AWarhammer_MapMaker::CreatePath()
         switch (random)
         {
         case 0:
-            if (RiverX > 0) RiverX--;
+            if (PathY > 0) PathY--;
             break;
 
         case 1:
-            if (RiverX < MapSize.X - 1) RiverX++;
+            if (PathY < MapSize.X - 1) PathY++;
             break;
 
         default:
-            RiverY++;
+            PathX++;
             break;
         }
 
-        TileArray[RiverY].RowArray[RiverX]->SetPath();
+        TileArray[PathY].RowArray[PathX]->SetPath();
 
-        if (RiverY == MapSize.X - 1) RiverEnded = true;
+        if (PathX == MapSize.X - 1) RiverEnded = true;
     }
 }
+
+void AWarhammer_MapMaker::GetAllCenters()
+{
+    for (int i = 0; i < (MapSize.X * MapSize.Y); i++)
+    {
+        FString DebugMessage = FString::Printf(TEXT("Border check n° %i"), i);
+        MyFunctionList::DebugPrint(DebugMessage, FColor::Yellow);
+        TileCenters.Add(IsTileOnBorder(i) ? 1 : 0);
+
+        DebugMessage = FString::Printf(TEXT("Coloring"));
+        MyFunctionList::DebugPrint(DebugMessage, FColor::Yellow);
+        if (TileCenters[i] == 1) TileArray[i / MapSize.X].RowArray[i % MapSize.X]->DebugShowTile();
+        
+        DebugMessage = FString::Printf(TEXT("Left: %i"), (MapSize.X * MapSize.Y) - (i+1));
+        MyFunctionList::DebugPrint(DebugMessage, FColor::Red);
+    }
+}
+
+bool AWarhammer_MapMaker::IsTileOnBorder(int16 tilePlace)
+{
+    ETileType tileType = TileArray[tilePlace / MapSize.X].RowArray[tilePlace % MapSize.X]->TileType;
+    FString DebugMessage;
+
+    DebugMessage = FString::Printf(TEXT("Border check n° %i"), tileType);
+    MyFunctionList::DebugPrint(DebugMessage, FColor::Yellow);
+
+    int row = tilePlace / MapSize.X;
+    int col = tilePlace % MapSize.X;
+
+    DebugMessage = FString::Printf(TEXT("Tile row = %i, col = %i"), row, col);
+    MyFunctionList::DebugPrint(DebugMessage, FColor::Yellow);
+
+    //Try up
+    DebugMessage = FString::Printf(TEXT("Cope"));
+    MyFunctionList::DebugPrint(DebugMessage, FColor::Yellow);
+    if (row > 0)
+    {
+        DebugMessage = FString::Printf(TEXT("Test Up"));
+        MyFunctionList::DebugPrint(DebugMessage, FColor::Yellow);
+        if (TileArray[row - 1].RowArray[col]->TileType != tileType)
+        {
+            DebugMessage = FString::Printf(TEXT("Up"));
+            MyFunctionList::DebugPrint(DebugMessage, FColor::Yellow);
+            return true;
+        }
+    }
+
+    //Try down
+    DebugMessage = FString::Printf(TEXT("Cope"));
+    MyFunctionList::DebugPrint(DebugMessage, FColor::Yellow);
+    if (row < MapSize.Y - 1)
+    {
+        DebugMessage = FString::Printf(TEXT("Test Down"));
+        MyFunctionList::DebugPrint(DebugMessage, FColor::Yellow);
+        if (TileArray[row + 1].RowArray[col]->TileType != tileType)
+        {
+            DebugMessage = FString::Printf(TEXT("Down"));
+            MyFunctionList::DebugPrint(DebugMessage, FColor::Yellow);
+            return true;
+        }
+    }
+
+    //Try left
+    DebugMessage = FString::Printf(TEXT("Cope"));
+    MyFunctionList::DebugPrint(DebugMessage, FColor::Yellow);
+    if (col > 0)
+    {
+        DebugMessage = FString::Printf(TEXT("Test Left"));
+        MyFunctionList::DebugPrint(DebugMessage, FColor::Yellow);
+        if (TileArray[row].RowArray[col - 1]->TileType != tileType)
+        {
+            DebugMessage = FString::Printf(TEXT("Left"));
+            MyFunctionList::DebugPrint(DebugMessage, FColor::Yellow);
+            return true;
+        }
+    }
+
+    //Try right
+    DebugMessage = FString::Printf(TEXT("Cope"));
+    MyFunctionList::DebugPrint(DebugMessage, FColor::Yellow);
+    if (col < MapSize.X - 1)
+    {
+        DebugMessage = FString::Printf(TEXT("Test Right"));
+        MyFunctionList::DebugPrint(DebugMessage, FColor::Yellow);
+        if (TileArray[row].RowArray[col + 1]->TileType != tileType)
+        {
+            DebugMessage = FString::Printf(TEXT("Right"));
+            MyFunctionList::DebugPrint(DebugMessage, FColor::Yellow);
+            return true;
+        }
+    }
+
+    DebugMessage = FString::Printf(TEXT("Nope"));
+    MyFunctionList::DebugPrint(DebugMessage, FColor::Yellow);
+    return false;
+}
+aaaa

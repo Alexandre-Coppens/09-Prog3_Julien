@@ -60,6 +60,9 @@ private:
 	TArray<FRowArray> TileArray;
 
 	UPROPERTY()
+	TArray<int8> TileCenters;
+
+	UPROPERTY()
 	float MeterTileScale;
 
 protected:
@@ -101,4 +104,10 @@ private:
 
 	UFUNCTION()
 	void CreatePath();
+
+	UFUNCTION()
+	void GetAllCenters();
+
+	UFUNCTION()
+	bool IsTileOnBorder(int16 tilePlace);
 };

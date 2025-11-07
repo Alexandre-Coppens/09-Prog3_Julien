@@ -4,6 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Enum_TileType.h"
+
 #include "AWarhammer_Tile.generated.h"
 
 UCLASS()
@@ -35,6 +37,12 @@ public:
 	UPROPERTY(EditAnywhere, Category = Default)
 	UMaterialInterface* PathMaterial;
 
+	UPROPERTY(EditAnywhere, Category = Default)
+	UMaterialInterface* DebugMaterial;
+
+	UPROPERTY()
+	ETileType TileType;
+
 private:
 
 protected:
@@ -54,7 +62,11 @@ public:
 	UFUNCTION()
 	void SetPath();
 
+	UFUNCTION()
+	void DebugShowTile();
+
 private:
 	UFUNCTION()
 	void SetMaterial(uint8 index);
+	
 };

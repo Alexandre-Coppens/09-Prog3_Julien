@@ -15,6 +15,8 @@ AWarhammer_Tile::AWarhammer_Tile()
 
 	TileMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
 	TileMesh->SetupAttachment(Root);
+
+	TileType = ETileType::None;
 }
 
 // Called when the game starts or when spawned
@@ -49,14 +51,17 @@ void AWarhammer_Tile::InitTile()
 	if (ActorScale.Z == 1.5f * ActorScale.X)
 	{
 		SetMaterial(0);
+		TileType = ETileType::Low;
 	}
 	else if (ActorScale.Z == 2.0f * ActorScale.X)
 	{
 		SetMaterial(1);
+		TileType = ETileType::Medium;
 	}
 	else
 	{
 		SetMaterial(2);
+		TileType = ETileType::High;
 	}
 }
 
@@ -72,23 +77,26 @@ void AWarhammer_Tile::SetRiver()
 		MyFunctionList::DebugPrint(DebugMessage, FColor::Red);
 	}
 	TileMesh->SetMaterial(0, RiverMaterial);
+	TileType = ETileType::River;
 }
 void AWarhammer_Tile::SetPath()
 {
-
-	FString DebugMessage = FString::Printf(TEXT("Setting a Path"));
-	MyFunctionList::DebugPrint(DebugMessage, FColor::Green);
-
 	FVector ActorScale = GetActorScale();
 	TileMesh->SetWorldScale3D(FVector(ActorScale.X, ActorScale.Y, ActorScale.Z - ActorScale.X * 0.25f));
 	TileMesh->SetRelativeLocation(FVector(0, 0, TileMesh->GetRelativeScale3D().Z * 50.0f));
 
 	if (!PathMaterial)
 	{
-		DebugMessage = FString::Printf(TEXT("Please Add a Path Material"));
+		FString DebugMessage = FString::Printf(TEXT("Please Add a Path Material"));
 		MyFunctionList::DebugPrint(DebugMessage, FColor::Red);
 	}
 	TileMesh->SetMaterial(0, PathMaterial);
+	TileType = ETileType::Path;
+}
+
+void AWarhammer_Tile::DebugShowTile()
+{
+	TileMesh->SetMaterial(0, DebugMaterial);
 }
 
 void AWarhammer_Tile::SetMaterial(uint8 index)
