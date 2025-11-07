@@ -61,6 +61,10 @@ void AWarhammer_MapMaker::BuildMap()
     {
         CreateRiver();
     }
+    for (int i = 0; i < PathNumber; i++)
+    {
+        CreatePath();
+    }
 }
 
 void AWarhammer_MapMaker::EmptyTileList()
@@ -83,7 +87,7 @@ void AWarhammer_MapMaker::EmptyTileList()
     double DebugTotalTime = DebugEndTime - DebugStartTime;
 
     FString DebugMessage = FString::Printf(TEXT("Empty execution took %f seconds (%f ms)"), DebugTotalTime, DebugTotalTime * 1000.0);
-    MyFunctionList::DebugPrint(DebugMessage);
+    MyFunctionList::DebugPrint(DebugMessage, FColor::Yellow);
 }
 
 void AWarhammer_MapMaker::DestroyAllTiles()
@@ -103,7 +107,7 @@ void AWarhammer_MapMaker::DestroyAllTiles()
     double DebugTotalTime = DebugEndTime - DebugStartTime;
 
     FString DebugMessage = FString::Printf(TEXT("Destroy execution took %f seconds (%f ms)"), DebugTotalTime, DebugTotalTime * 1000.0);
-    MyFunctionList::DebugPrint(DebugMessage);
+    MyFunctionList::DebugPrint(DebugMessage, FColor::Yellow);
 }
 
 void AWarhammer_MapMaker::Resize() 
@@ -121,7 +125,7 @@ void AWarhammer_MapMaker::CreateBaseMap()
     if (!TileClass->IsValidLowLevelFast())
     {
         FString DebugMessage = FString::Printf(TEXT("Tile Class is not VALID!"));
-        MyFunctionList::DebugPrint(DebugMessage);
+        MyFunctionList::DebugPrint(DebugMessage, FColor::Red);
     }
 
     FVector2D PerlinStartPos{ FMath::RandRange(0.0, 99999.0), FMath::RandRange(0.0, 99999.0)};
@@ -174,7 +178,7 @@ void AWarhammer_MapMaker::CreateBaseMap()
     double DebugTotalTime = DebugEndTime - DebugStartTime;
 
     FString DebugMessage = FString::Printf(TEXT("Build execution took %f seconds (%f ms)"), DebugTotalTime, DebugTotalTime * 1000.0);
-    MyFunctionList::DebugPrint(DebugMessage);
+    MyFunctionList::DebugPrint(DebugMessage, FColor::Yellow);
 }
 
 uint8 AWarhammer_MapMaker::GetHeightElevation(float X, float Y, float Frequency)
@@ -216,5 +220,38 @@ void AWarhammer_MapMaker::CreateRiver()
         TileArray[RiverX].RowArray[RiverY]->SetRiver();
 
         if (RiverY == MapSize.Y - 1) RiverEnded = true;
+    }
+}
+
+void AWarhammer_MapMaker::CreatePath()
+{
+    uint8 RiverX = ceilf(roundf(FMath::RandRange(MapSize.X * 0.1f, MapSize.X * 0.9f)));
+    uint8 RiverY = 0;
+
+    TileArray[RiverY].RowArray[RiverX]->SetPath();
+
+    uint8 random;
+    bool RiverEnded = false;
+    for (int i = 0; i <= 1000 && !RiverEnded; i++)
+    {
+        random = roundf(FMath::RandRange(0, 7));
+        switch (random)
+        {
+        case 0:
+            if (RiverX > 0) RiverX--;
+            break;
+
+        case 1:
+            if (RiverX < MapSize.X - 1) RiverX++;
+            break;
+
+        default:
+            RiverY++;
+            break;
+        }
+
+        TileArray[RiverY].RowArray[RiverX]->SetPath();
+
+        if (RiverY == MapSize.X - 1) RiverEnded = true;
     }
 }

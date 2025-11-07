@@ -52,6 +52,9 @@ public:
 	UPROPERTY(EditAnywhere, meta = (ClampMin = 0, ClampMax = 5), Category = Default)
 	uint8 RiverNumber;
 
+	UPROPERTY(EditAnywhere, meta = (ClampMin = 0, ClampMax = 5), Category = Default)
+	uint8 PathNumber;
+
 private:
 	UPROPERTY()
 	TArray<FRowArray> TileArray;
@@ -95,4 +98,7 @@ private:
 
 	UFUNCTION()
 	void CreateRiver();
+
+	UFUNCTION()
+	void CreatePath();
 };

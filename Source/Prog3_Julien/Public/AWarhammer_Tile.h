@@ -32,6 +32,9 @@ public:
 	UPROPERTY(EditAnywhere, Category = Default)
 	UMaterialInterface* RiverMaterial;
 
+	UPROPERTY(EditAnywhere, Category = Default)
+	UMaterialInterface* PathMaterial;
+
 private:
 
 protected:
@@ -47,6 +50,9 @@ public:
 
 	UFUNCTION()
 	void SetRiver();
+
+	UFUNCTION()
+	void SetPath();
 
 private:
 	UFUNCTION()

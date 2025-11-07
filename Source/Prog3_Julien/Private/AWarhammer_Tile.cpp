@@ -40,7 +40,7 @@ void AWarhammer_Tile::InitTile()
 	if (!Parent)
 	{
 		FString DebugMessage = FString::Printf(TEXT("Tile has no Parent Actor"));
-		MyFunctionList::DebugPrint(DebugMessage);
+		MyFunctionList::DebugPrint(DebugMessage, FColor::Red);
 		return;
 	}
 
@@ -69,9 +69,26 @@ void AWarhammer_Tile::SetRiver()
 	if (!RiverMaterial) 
 	{
 		FString DebugMessage = FString::Printf(TEXT("Please Add a River Material"));
-		MyFunctionList::DebugPrint(DebugMessage);
+		MyFunctionList::DebugPrint(DebugMessage, FColor::Red);
 	}
 	TileMesh->SetMaterial(0, RiverMaterial);
+}
+void AWarhammer_Tile::SetPath()
+{
+
+	FString DebugMessage = FString::Printf(TEXT("Setting a Path"));
+	MyFunctionList::DebugPrint(DebugMessage, FColor::Green);
+
+	FVector ActorScale = GetActorScale();
+	TileMesh->SetWorldScale3D(FVector(ActorScale.X, ActorScale.Y, ActorScale.Z - ActorScale.X * 0.25f));
+	TileMesh->SetRelativeLocation(FVector(0, 0, TileMesh->GetRelativeScale3D().Z * 50.0f));
+
+	if (!PathMaterial)
+	{
+		DebugMessage = FString::Printf(TEXT("Please Add a Path Material"));
+		MyFunctionList::DebugPrint(DebugMessage, FColor::Red);
+	}
+	TileMesh->SetMaterial(0, PathMaterial);
 }
 
 void AWarhammer_Tile::SetMaterial(uint8 index)
@@ -79,7 +96,7 @@ void AWarhammer_Tile::SetMaterial(uint8 index)
 	if (MaterialsUsed.Num() == 0)
 	{
 		FString DebugMessage = FString::Printf(TEXT("Please Add at least 1 Material to Tile"));
-		MyFunctionList::DebugPrint(DebugMessage);
+		MyFunctionList::DebugPrint(DebugMessage, FColor::Red);
 		return;
 	}
 

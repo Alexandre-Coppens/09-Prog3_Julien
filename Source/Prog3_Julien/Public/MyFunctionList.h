@@ -6,5 +6,5 @@
 
 struct MyFunctionList
 {
-	static void DebugPrint(FString DebugMessage);
+	static void DebugPrint(FString DebugMessage, FColor Color);
 };
