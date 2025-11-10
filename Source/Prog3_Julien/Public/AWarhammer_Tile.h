@@ -38,7 +38,7 @@ public:
 	UMaterialInterface* PathMaterial;
 
 	UPROPERTY(EditAnywhere, Category = Default)
-	UMaterialInterface* DebugMaterial;
+	TArray<UMaterialInterface*> DebugMaterials;
 
 	UPROPERTY()
 	ETileType TileType;
@@ -63,7 +63,7 @@ public:
 	void SetPath();
 
 	UFUNCTION()
-	void DebugShowTile();
+	void DebugShowTile(int8 skin);
 
 private:
 	UFUNCTION()

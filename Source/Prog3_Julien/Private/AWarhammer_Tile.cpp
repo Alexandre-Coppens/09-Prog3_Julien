@@ -94,9 +94,22 @@ void AWarhammer_Tile::SetPath()
 	TileType = ETileType::Path;
 }
 
-void AWarhammer_Tile::DebugShowTile()
+void AWarhammer_Tile::DebugShowTile(int8 skin)
 {
-	TileMesh->SetMaterial(0, DebugMaterial);
+	if (DebugMaterials.Num() == 0)
+	{
+		FString DebugMessage = FString::Printf(TEXT("Please Add at least 1 Material to DebugMaterials"));
+		MyFunctionList::DebugPrint(DebugMessage, FColor::Red);
+		return;
+	}
+
+	if (skin >= DebugMaterials.Num())
+	{
+		SetMaterial(DebugMaterials.Num() - 1);
+		return;
+	}
+
+	TileMesh->SetMaterial(0, DebugMaterials[skin]);
 }
 
 void AWarhammer_Tile::SetMaterial(uint8 index)

@@ -60,7 +60,7 @@ private:
 	TArray<FRowArray> TileArray;
 
 	UPROPERTY()
-	TArray<int8> TileCenters;
+	TMap<int32, int8> TileCenters;
 
 	UPROPERTY()
 	float MeterTileScale;
@@ -90,6 +90,7 @@ public:
 #endif
 
 private:
+
 	UFUNCTION()
 	void Resize();
 
@@ -109,5 +110,8 @@ private:
 	void GetAllCenters();
 
 	UFUNCTION()
-	bool IsTileOnBorder(int16 tilePlace);
+	bool IsTileOnBorder(int32 tilePlace);
+
+	UFUNCTION()
+	bool IsNextTileNumbered(int32 tilePlace);
 };
