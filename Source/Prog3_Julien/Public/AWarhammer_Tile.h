@@ -43,7 +43,14 @@ public:
 	UPROPERTY()
 	ETileType TileType;
 
+	UPROPERTY()
+	bool hasBeenChecked;
+
+	UPROPERTY()
+	int8 borderDist;
+
 private:
+	
 
 protected:
 	// Called when the game starts or when spawned

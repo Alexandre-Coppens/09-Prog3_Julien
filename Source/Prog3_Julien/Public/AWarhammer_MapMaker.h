@@ -57,10 +57,16 @@ public:
 
 private:
 	UPROPERTY()
-	TArray<FRowArray> TileArray;
+	TArray<FTileRowArray> TileArray;
 
 	UPROPERTY()
-	TMap<int32, int8> TileCenters;
+	TArray<FPosArray> TileCenters;
+
+	UPROPERTY()
+	TArray<int32> bestTiles;
+
+	UPROPERTY()
+	int32 ExpandingSize;
 
 	UPROPERTY()
 	float MeterTileScale;
@@ -92,6 +98,12 @@ public:
 private:
 
 	UFUNCTION()
+	AWarhammer_Tile* GetTileAt(int32 pos);
+
+	UFUNCTION()
+	bool IsTileInTileCenter(int32 pos);
+
+	UFUNCTION()
 	void Resize();
 
 	UFUNCTION()
@@ -109,9 +121,15 @@ private:
 	UFUNCTION()
 	void GetAllCenters();
 
+	//Used to get all borders.
 	UFUNCTION()
 	bool IsTileOnBorder(int32 tilePlace);
 
+	//Used to expand the border check.
 	UFUNCTION()
 	bool IsNextTileNumbered(int32 tilePlace);
+
+	//Used to get all the best road points.
+	UFUNCTION()
+	void CheckTileAround(int32 tilePlace, int8 bestTile, int8 repetitionLeft);
 };

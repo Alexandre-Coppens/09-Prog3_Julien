@@ -8,11 +8,21 @@
 #include "FRowArray.generated.h"
 
 USTRUCT(BlueprintType)
-struct FRowArray
+struct FTileRowArray
 {
     GENERATED_BODY()
 
 public:
     UPROPERTY()
-    TArray<AWarhammer_Tile*> RowArray;
+    TArray<AWarhammer_Tile*> TileRowArray;
+};
+
+USTRUCT(BlueprintType)
+struct FPosArray
+{
+    GENERATED_BODY()
+
+public:
+    UPROPERTY()
+    TArray<int32> PosArray;
 };

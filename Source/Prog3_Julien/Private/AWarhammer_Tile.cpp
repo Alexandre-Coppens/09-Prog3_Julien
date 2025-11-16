@@ -17,6 +17,7 @@ AWarhammer_Tile::AWarhammer_Tile()
 	TileMesh->SetupAttachment(Root);
 
 	TileType = ETileType::None;
+	hasBeenChecked = true;
 }
 
 // Called when the game starts or when spawned

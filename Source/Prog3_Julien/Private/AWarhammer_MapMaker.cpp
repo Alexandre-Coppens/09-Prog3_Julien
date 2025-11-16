@@ -73,9 +73,9 @@ void AWarhammer_MapMaker::EmptyTileList()
 {
     double DebugStartTime = FPlatformTime::Seconds();
 
-    for (FRowArray Row : TileArray)
+    for (FTileRowArray Row : TileArray)
     {
-        for (AActor* Tile : Row.RowArray)
+        for (AActor* Tile : Row.TileRowArray)
         {
             if (Tile)
             {
@@ -112,7 +112,24 @@ void AWarhammer_MapMaker::DestroyAllTiles()
     MyFunctionList::DebugPrint(DebugMessage, FColor::Yellow);
 }
 
-void AWarhammer_MapMaker::Resize() 
+AWarhammer_Tile* AWarhammer_MapMaker::GetTileAt(int32 pos)
+{
+    return TileArray[pos / MapSize.X].TileRowArray[pos % MapSize.X];
+}
+
+bool AWarhammer_MapMaker::IsTileInTileCenter(int32 pos)
+{
+    for (FPosArray i : TileCenters)
+    {
+        for (int32 j : i.PosArray)
+        {
+            if (j == pos) return true;
+        }
+    }
+    return false;
+}
+
+void AWarhammer_MapMaker::Resize()
 {
     MapSize.X = FMath::Clamp(MapSize.X, 1, 50);
     MapSize.Y = FMath::Clamp(MapSize.Y, 1, 50);
@@ -154,7 +171,7 @@ void AWarhammer_MapMaker::CreateBaseMap()
     double DebugStartTime = FPlatformTime::Seconds();
 
     for (int i = 0; i < MapSize.Y; i++) {
-        FRowArray row;
+        FTileRowArray row;
         for (int j = 0; j < MapSize.X; j++) {
             Location = FVector( CurrentPosition.X + MeterTileScale * j + MeterTileScale * 0.5f,
                                 CurrentPosition.Y + MeterTileScale * i + MeterTileScale * 0.5f,
@@ -167,7 +184,7 @@ void AWarhammer_MapMaker::CreateBaseMap()
             if (NewTile)
             {
                 NewTile->SetActorScale3D(Scale);
-                row.RowArray.Add(NewTile);
+                row.TileRowArray.Add(NewTile);
                 NewTile->AttachToActor(this, FAttachmentTransformRules::KeepWorldTransform);
                 NewTile->InitTile();
             }
@@ -199,7 +216,7 @@ void AWarhammer_MapMaker::CreateRiver()
     uint8 RiverX = ceilf(MapSize.X * 0.5f) + roundf(FMath::RandRange(MapSize.X * -0.125f, MapSize.X * 0.125f));
     uint8 RiverY = 0;
 
-    TileArray[RiverY].RowArray[RiverX]->SetRiver();
+    TileArray[RiverY].TileRowArray[RiverX]->SetRiver();
 
     uint8 random;
     bool RiverEnded = false;
@@ -221,7 +238,7 @@ void AWarhammer_MapMaker::CreateRiver()
             break;
         }
 
-        TileArray[RiverY].RowArray[RiverX]->SetRiver();
+        TileArray[RiverY].TileRowArray[RiverX]->SetRiver();
 
         if (RiverY == MapSize.Y - 1) RiverEnded = true;
     }
@@ -233,7 +250,7 @@ void AWarhammer_MapMaker::CreatePath()
     uint8 PathY = ceilf(roundf(FMath::RandRange(MapSize.Y * 0.1f, MapSize.Y * 0.9f)));
     uint8 PathX = 0;
 
-    TileArray[PathY].RowArray[PathX]->SetPath();
+    TileArray[PathY].TileRowArray[PathX]->SetPath();
 
     uint8 random;
     bool RiverEnded = false;
@@ -255,7 +272,7 @@ void AWarhammer_MapMaker::CreatePath()
             break;
         }
 
-        TileArray[PathY].RowArray[PathX]->SetPath();
+        TileArray[PathY].TileRowArray[PathX]->SetPath();
 
         if (PathX == MapSize.X - 1) RiverEnded = true;
     }
@@ -265,6 +282,8 @@ void AWarhammer_MapMaker::GetAllCenters()
 {
     FString DebugMessage;
 
+    DebugMessage = FString::Printf(TEXT("Init All Positions"));
+    MyFunctionList::DebugPrint(DebugMessage, FColor::Yellow);
     //Init all positions
     TArray<int32> positionArray;
     for (int i = 0; i < (MapSize.X * MapSize.Y); i++)
@@ -272,23 +291,33 @@ void AWarhammer_MapMaker::GetAllCenters()
         positionArray.Add(i);
     }
 
+    DebugMessage = FString::Printf(TEXT("Find All Borders"));
+    MyFunctionList::DebugPrint(DebugMessage, FColor::Yellow);
     //Find all borders
     TileCenters.Empty();
+    FPosArray borderList;
     for (int i = 0; i < positionArray.Num(); i++)
     {
         DebugMessage = FString::Printf(TEXT("Border check n° %i"), i);
         MyFunctionList::DebugPrint(DebugMessage, FColor::Green);
         if (IsTileOnBorder(i))
         {
-            TileCenters.Add(i, 1);
+            borderList.PosArray.Add(i);
             positionArray[i] = -1;
+            GetTileAt(i)->borderDist = 1;
         }
     }
+    TileCenters.Add(borderList);
+
+    DebugMessage = FString::Printf(TEXT("Expand Numbers"));
+    MyFunctionList::DebugPrint(DebugMessage, FColor::Yellow);
     //Expand numbers
-    int n = 2;
+    int currentBorder = 2;
+    ExpandingSize = 0;
     TArray<int32> tempArray;
     while (TileCenters.Num() != positionArray.Num())
     {
+        borderList.PosArray.Empty();
         for (int32 i : positionArray)
         {
             DebugMessage = FString::Printf(TEXT("Int Value = %i"), TileCenters.Num());
@@ -299,45 +328,53 @@ void AWarhammer_MapMaker::GetAllCenters()
                 {
                     tempArray.Add(i);
                     positionArray[i] = -1;
+                    GetTileAt(i)->borderDist = currentBorder;
                 }
             }
         }
+        DebugMessage = FString::Printf(TEXT("Pause"));
+        MyFunctionList::DebugPrint(DebugMessage, FColor::Cyan);
         for (int32 j : tempArray)
         {
-            TileCenters.Add(j, n);
+            borderList.PosArray.Add(j);
+            ExpandingSize++;
         }
+        TileCenters.Add(borderList);
         tempArray.Empty();
-        n++;
+        currentBorder++;
     }
-    //Show Best Positions
-    for (TTuple<int32, int8>& t : TileCenters)
+
+    DebugMessage = FString::Printf(TEXT("Show Best Positions"));
+    MyFunctionList::DebugPrint(DebugMessage, FColor::Yellow);
+    //Show Best Positions From best to worst
+    for (int k = TileCenters.Num() - 1; k != 0; k--) {
+        for (int32 checkPos : TileCenters[k].PosArray)
+        {
+            if (not GetTileAt(checkPos)->hasBeenChecked)
+            {
+                CheckTileAround(checkPos, k, 6);
+            }
+        }
+    }
+
+    for (int i = 0; i < MapSize.X * MapSize.Y; i++)
     {
-        TileArray[t.Key / MapSize.X].RowArray[t.Key % MapSize.X]->DebugShowTile(t.Value - 1);
+        GetTileAt(i)->DebugShowTile(bestTiles.Find(i)?6:0);
     }
 }
 
 bool AWarhammer_MapMaker::IsTileOnBorder(int32 tilePlace)
 {
-    ETileType tileType = TileArray[tilePlace / MapSize.X].RowArray[tilePlace % MapSize.X]->TileType;
-    FString DebugMessage;
-
-    FString EnumName = StaticEnum<ETileType>()->GetNameStringByValue(static_cast<int64>(tileType));
-    DebugMessage = FString::Printf(TEXT("Current Tile = %s"), *EnumName);
-    MyFunctionList::DebugPrint(DebugMessage, FColor::Yellow);
+    ETileType tileType = GetTileAt(tilePlace)->TileType;
 
     int row = tilePlace / MapSize.X;
     int col = tilePlace % MapSize.X;
-    int i = tilePlace;
 
     //Try up
     if (row > 0)
     {
-        EnumName = StaticEnum<ETileType>()->GetNameStringByValue(static_cast<int64>(TileArray[row - 1].RowArray[col]->TileType));
-        DebugMessage = FString::Printf(TEXT("Up Tile = %s"), *EnumName);
-        if (TileArray[row - 1].RowArray[col]->TileType != tileType)
+        if (GetTileAt(tilePlace  - MapSize.X)->TileType != tileType)
         {
-            MyFunctionList::DebugPrint(DebugMessage, FColor::Yellow);
-            //TileArray[i / MapSize.X].RowArray[i % MapSize.X]->DebugShowTile();
             return true;
         }
     }
@@ -345,12 +382,8 @@ bool AWarhammer_MapMaker::IsTileOnBorder(int32 tilePlace)
     //Try down
     if (row < MapSize.Y - 1)
     {
-        EnumName = StaticEnum<ETileType>()->GetNameStringByValue(static_cast<int64>(TileArray[row + 1].RowArray[col]->TileType));
-        DebugMessage = FString::Printf(TEXT("Down Tile = %s"), *EnumName);
-        if (TileArray[row + 1].RowArray[col]->TileType != tileType)
+        if (GetTileAt(tilePlace + MapSize.X)->TileType != tileType)
         {
-            MyFunctionList::DebugPrint(DebugMessage, FColor::Yellow);
-            //TileArray[i / MapSize.X].RowArray[i % MapSize.X]->DebugShowTile();
             return true;
         }
     }
@@ -358,12 +391,8 @@ bool AWarhammer_MapMaker::IsTileOnBorder(int32 tilePlace)
     //Try left
     if (col > 0)
     {
-        EnumName = StaticEnum<ETileType>()->GetNameStringByValue(static_cast<int64>(TileArray[row].RowArray[col - 1]->TileType));
-        DebugMessage = FString::Printf(TEXT("Left Tile = %s"), *EnumName);
-        if (TileArray[row].RowArray[col - 1]->TileType != tileType)
+        if (GetTileAt(tilePlace - 1)->TileType != tileType)
         {
-            MyFunctionList::DebugPrint(DebugMessage, FColor::Yellow);
-            //TileArray[i / MapSize.X].RowArray[i % MapSize.X]->DebugShowTile();
             return true;
         }
     }
@@ -371,18 +400,12 @@ bool AWarhammer_MapMaker::IsTileOnBorder(int32 tilePlace)
     //Try right
     if (col < MapSize.X - 1)
     {
-        EnumName = StaticEnum<ETileType>()->GetNameStringByValue(static_cast<int64>(TileArray[row].RowArray[col + 1]->TileType));
-        DebugMessage = FString::Printf(TEXT("Right Tile = %s"), *EnumName);
-        if (TileArray[row].RowArray[col + 1]->TileType != tileType)
+        if (GetTileAt(tilePlace + 1)->TileType != tileType)
         {
-            MyFunctionList::DebugPrint(DebugMessage, FColor::Yellow);
-            //TileArray[i / MapSize.X].RowArray[i % MapSize.X]->DebugShowTile();
             return true;
         }
     }
 
-    DebugMessage = FString::Printf(TEXT("Nope"));
-    MyFunctionList::DebugPrint(DebugMessage, FColor::Yellow);
     return false;
 }
 
@@ -395,7 +418,7 @@ bool AWarhammer_MapMaker::IsNextTileNumbered(int32 tilePlace)
     //Try up
     if (row > 0)
     {
-        if (TileCenters.Find(i - MapSize.X))
+        if (IsTileInTileCenter(i - MapSize.X))
         {
             return true;
         }
@@ -404,7 +427,7 @@ bool AWarhammer_MapMaker::IsNextTileNumbered(int32 tilePlace)
     //Try down
     if (row < MapSize.Y - 1)
     {
-        if (TileCenters.Find(i + MapSize.X))
+        if (IsTileInTileCenter(i + MapSize.X))
         {
 
             return true;
@@ -414,7 +437,7 @@ bool AWarhammer_MapMaker::IsNextTileNumbered(int32 tilePlace)
     //Try left
     if (col > 0)
     {
-        if (TileCenters.Find(i - 1))
+        if (IsTileInTileCenter(i - 1))
         {
             return true;
         }
@@ -423,11 +446,58 @@ bool AWarhammer_MapMaker::IsNextTileNumbered(int32 tilePlace)
     //Try right
     if (col < MapSize.X - 1)
     {
-        if (TileCenters.Find(i + 1))
+        if (IsTileInTileCenter(i + 1))
         {
             return true;
         }
     }
 
     return false;
+}
+
+
+void AWarhammer_MapMaker::CheckTileAround(int32 tilePlace, int8 best, int8 repetitionLeft)
+{
+    AWarhammer_Tile* tile = GetTileAt(tilePlace);
+
+    if (tile->hasBeenChecked) return;
+
+    int row = tilePlace / MapSize.X;
+    int col = tilePlace % MapSize.X;
+    int i = tilePlace;
+
+    tile->hasBeenChecked = true;
+
+    if (tile->borderDist == best)
+    {
+        bestTiles.Add(tilePlace);
+    }
+
+    if (repetitionLeft == 0) return;
+
+    //Try up
+    if (row > 0)
+    {
+        CheckTileAround(i - MapSize.X, best, repetitionLeft - 1);
+    }
+
+    //Try down
+    if (row < MapSize.Y - 1)
+    {
+        CheckTileAround(i + MapSize.X, best, repetitionLeft - 1);
+    }
+
+    //Try left
+    if (col > 0)
+    {
+        CheckTileAround(i - 1, best, repetitionLeft - 1);
+    }
+
+    //Try right
+    if (col < MapSize.X - 1)
+    {
+        CheckTileAround(i + 1, best, repetitionLeft - 1);
+    }
+
+    return;
 }
