@@ -17,7 +17,6 @@ AWarhammer_Tile::AWarhammer_Tile()
 	TileMesh->SetupAttachment(Root);
 
 	TileType = ETileType::None;
-	hasBeenChecked = true;
 }
 
 // Called when the game starts or when spawned
@@ -106,7 +105,13 @@ void AWarhammer_Tile::DebugShowTile(int8 skin)
 
 	if (skin >= DebugMaterials.Num())
 	{
-		SetMaterial(DebugMaterials.Num() - 1);
+		DebugShowTile(DebugMaterials.Num() - 1);
+		return;
+	}
+
+	if (skin < 0)
+	{
+		DebugShowTile(0);
 		return;
 	}
 

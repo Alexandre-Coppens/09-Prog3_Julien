@@ -312,28 +312,29 @@ void AWarhammer_MapMaker::GetAllCenters()
     DebugMessage = FString::Printf(TEXT("Expand Numbers"));
     MyFunctionList::DebugPrint(DebugMessage, FColor::Yellow);
     //Expand numbers
+    int tileLeft = positionArray.Num() - TileCenters[0].PosArray.Num();
     int currentBorder = 2;
     ExpandingSize = 0;
     TArray<int32> tempArray;
-    while (TileCenters.Num() != positionArray.Num())
+    bestTiles.Empty();
+    while (tileLeft != 0)
     {
         borderList.PosArray.Empty();
         for (int32 i : positionArray)
         {
-            DebugMessage = FString::Printf(TEXT("Int Value = %i"), TileCenters.Num());
-            MyFunctionList::DebugPrint(DebugMessage, FColor::Cyan);
             if (i != -1)
             {
+                DebugMessage = FString::Printf(TEXT("Loop n° %i | Position = %i"), currentBorder, i);
+                MyFunctionList::DebugPrint(DebugMessage, FColor::Cyan);
                 if (IsNextTileNumbered(i))
                 {
                     tempArray.Add(i);
                     positionArray[i] = -1;
                     GetTileAt(i)->borderDist = currentBorder;
+                    tileLeft--;
                 }
             }
         }
-        DebugMessage = FString::Printf(TEXT("Pause"));
-        MyFunctionList::DebugPrint(DebugMessage, FColor::Cyan);
         for (int32 j : tempArray)
         {
             borderList.PosArray.Add(j);
@@ -347,19 +348,25 @@ void AWarhammer_MapMaker::GetAllCenters()
     DebugMessage = FString::Printf(TEXT("Show Best Positions"));
     MyFunctionList::DebugPrint(DebugMessage, FColor::Yellow);
     //Show Best Positions From best to worst
-    for (int k = TileCenters.Num() - 1; k != 0; k--) {
+    int8 cluster = 0;
+    for (int k = TileCenters.Num() - 1; k != FMath::Max(0, TileCenters.Num() - 5); k--) {
         for (int32 checkPos : TileCenters[k].PosArray)
         {
             if (not GetTileAt(checkPos)->hasBeenChecked)
             {
-                CheckTileAround(checkPos, k, 6);
+                CheckTileAround(checkPos, k, 6, cluster);
             }
         }
+        cluster += 1;
     }
 
-    for (int i = 0; i < MapSize.X * MapSize.Y; i++)
+    for (int i = 0; i < bestTiles.Num(); i++)
     {
-        GetTileAt(i)->DebugShowTile(bestTiles.Find(i)?6:0);
+        int8 color = roundf(FMath::RandRange(0, 5));
+        for (int j = 0; j < bestTiles[i].PosArray.Num(); j++)
+        {
+            GetTileAt(bestTiles[i].PosArray[j])->DebugShowTile(color);
+        }
     }
 }
 
@@ -456,11 +463,14 @@ bool AWarhammer_MapMaker::IsNextTileNumbered(int32 tilePlace)
 }
 
 
-void AWarhammer_MapMaker::CheckTileAround(int32 tilePlace, int8 best, int8 repetitionLeft)
+void AWarhammer_MapMaker::CheckTileAround(int32 tilePlace, int8 best, int8 repetitionLeft, int8 currentCluster)
 {
     AWarhammer_Tile* tile = GetTileAt(tilePlace);
 
     if (tile->hasBeenChecked) return;
+
+    FString DebugMessage = FString::Printf(TEXT("Border Dist = %i"), tile->borderDist);
+    MyFunctionList::DebugPrint(DebugMessage, FColor::Yellow);
 
     int row = tilePlace / MapSize.X;
     int col = tilePlace % MapSize.X;
@@ -468,9 +478,18 @@ void AWarhammer_MapMaker::CheckTileAround(int32 tilePlace, int8 best, int8 repet
 
     tile->hasBeenChecked = true;
 
-    if (tile->borderDist == best)
+    if (tile->borderDist == best )
     {
-        bestTiles.Add(tilePlace);
+        while (bestTiles.Num() <= currentCluster)
+        {
+            bestTiles.Add(FPosArray());
+        }
+
+        DebugMessage = FString::Printf(TEXT("Border Dist = %i"), tile->borderDist);
+        MyFunctionList::DebugPrint(DebugMessage, FColor::Yellow);
+        bestTiles[currentCluster].PosArray.Add(tilePlace);
+        DebugMessage = FString::Printf(TEXT("test"));
+        MyFunctionList::DebugPrint(DebugMessage, FColor::Yellow);
     }
 
     if (repetitionLeft == 0) return;
@@ -478,25 +497,25 @@ void AWarhammer_MapMaker::CheckTileAround(int32 tilePlace, int8 best, int8 repet
     //Try up
     if (row > 0)
     {
-        CheckTileAround(i - MapSize.X, best, repetitionLeft - 1);
+        CheckTileAround(i - MapSize.X, best, repetitionLeft - 1, currentCluster);
     }
 
     //Try down
     if (row < MapSize.Y - 1)
     {
-        CheckTileAround(i + MapSize.X, best, repetitionLeft - 1);
+        CheckTileAround(i + MapSize.X, best, repetitionLeft - 1, currentCluster);
     }
 
     //Try left
     if (col > 0)
     {
-        CheckTileAround(i - 1, best, repetitionLeft - 1);
+        CheckTileAround(i - 1, best, repetitionLeft - 1, currentCluster);
     }
 
     //Try right
     if (col < MapSize.X - 1)
     {
-        CheckTileAround(i + 1, best, repetitionLeft - 1);
+        CheckTileAround(i + 1, best, repetitionLeft - 1, currentCluster);
     }
 
     return;

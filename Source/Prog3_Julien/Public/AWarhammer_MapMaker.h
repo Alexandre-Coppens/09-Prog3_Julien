@@ -63,7 +63,7 @@ private:
 	TArray<FPosArray> TileCenters;
 
 	UPROPERTY()
-	TArray<int32> bestTiles;
+	TArray<FPosArray> bestTiles;
 
 	UPROPERTY()
 	int32 ExpandingSize;
@@ -131,5 +131,5 @@ private:
 
 	//Used to get all the best road points.
 	UFUNCTION()
-	void CheckTileAround(int32 tilePlace, int8 bestTile, int8 repetitionLeft);
+	void CheckTileAround(int32 tilePlace, int8 bestTile, int8 repetitionLeft, int8 currentCluster);
 };
