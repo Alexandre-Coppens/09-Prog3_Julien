@@ -286,16 +286,19 @@ void AWarhammer_MapMaker::GetAllCenters()
     MyFunctionList::DebugPrint(DebugMessage, FColor::Yellow);
     //Init all positions
     TArray<int32> positionArray;
+    TArray<int32> secondaryArray;
     for (int i = 0; i < (MapSize.X * MapSize.Y); i++)
     {
         positionArray.Add(i);
     }
+    secondaryArray = positionArray;
 
     DebugMessage = FString::Printf(TEXT("Find All Borders"));
     MyFunctionList::DebugPrint(DebugMessage, FColor::Yellow);
     //Find all borders
     TileCenters.Empty();
     FPosArray borderList;
+    FPosArray SideList;
     for (int i = 0; i < positionArray.Num(); i++)
     {
         DebugMessage = FString::Printf(TEXT("Border check n° %i"), i);
@@ -308,7 +311,7 @@ void AWarhammer_MapMaker::GetAllCenters()
         }
     }
     TileCenters.Add(borderList);
-
+     
     DebugMessage = FString::Printf(TEXT("Expand Numbers"));
     MyFunctionList::DebugPrint(DebugMessage, FColor::Yellow);
     //Expand numbers
@@ -349,7 +352,7 @@ void AWarhammer_MapMaker::GetAllCenters()
     MyFunctionList::DebugPrint(DebugMessage, FColor::Yellow);
     //Show Best Positions From best to worst
     int8 cluster = 0;
-    for (int k = TileCenters.Num() - 1; k != FMath::Max(0, TileCenters.Num() - 5); k--) {
+    for (int k = TileCenters.Num() - 1; k != 3; k--) {
         for (int32 checkPos : TileCenters[k].PosArray)
         {
             if (not GetTileAt(checkPos)->hasBeenChecked)
@@ -360,12 +363,59 @@ void AWarhammer_MapMaker::GetAllCenters()
         cluster += 1;
     }
 
+    //Get Random Tile in the best Paths (1 per clusters )
+    TArray<int32> bestPathArray;
+    bestPathArray.Add(FMath::RandRange(0, MapSize.Y - 1) * MapSize.X);
     for (int i = 0; i < bestTiles.Num(); i++)
     {
-        int8 color = roundf(FMath::RandRange(0, 5));
-        for (int j = 0; j < bestTiles[i].PosArray.Num(); j++)
+        if (bestTiles[i].PosArray.Num() != 0)
         {
-            GetTileAt(bestTiles[i].PosArray[j])->DebugShowTile(color);
+            bestPathArray.Add(bestTiles[i].PosArray[FMath::RandRange(0, bestTiles[i].PosArray.Num() - 1)]);
+        }
+    }
+    bestPathArray.Add(FMath::RandRange(0, MapSize.Y - 1) * MapSize.X + MapSize.X -1);
+
+    //Create Path with fast voxel algorithm
+    float tMaxX, tMaxY, tDeltaX, tDeltaY;
+    int stepX, stepY, X, Y, endX, endY, dX, dY;
+    for (int j = 0; j < bestPathArray.Num() - 1; j++)
+    {
+        X = bestPathArray[j] % MapSize.X;
+        Y = bestPathArray[j] / MapSize.X;
+        endX = bestPathArray[j+1] % MapSize.X;
+        endY = bestPathArray[j+1] / MapSize.X;
+        
+        TileArray[Y].TileRowArray[X]->SetPath();
+
+        if (endX > X)stepX = 1;
+        else if (endX < X) stepX = -1;
+        else stepX = 0;
+
+        if (endY > Y)stepY = 1;
+        else if (endY < Y) stepY = -1;
+        else stepY = 0;
+
+        dX = endX - X;
+        dY = endY - Y;
+
+        tDeltaX = dX == 0 ? 0 : abs(1.0f / dX);
+        tDeltaY = dY==0 ? 0 : abs(1.0f/ dY);
+
+        tMaxX = tDeltaX;
+        tMaxY = tDeltaY;
+
+        while (X != endX || Y != endY) {
+            if (tMaxX < tMaxY) {
+                tMaxX = tMaxX + tDeltaX;
+                X = X + stepX;
+            }
+            else {
+                tMaxY = tMaxY + tDeltaY;
+                Y = Y + stepY;
+            }
+            DebugMessage = FString::Printf(TEXT("X = %i; Y = %i || EndX = %i; EndY = %i"), X, Y, endX, endY);
+            MyFunctionList::DebugPrint(DebugMessage, FColor::Yellow);
+            TileArray[Y].TileRowArray[X]->SetPath();
         }
     }
 }
@@ -430,6 +480,10 @@ bool AWarhammer_MapMaker::IsNextTileNumbered(int32 tilePlace)
             return true;
         }
     }
+    else
+    {
+        return true;
+    }
 
     //Try down
     if (row < MapSize.Y - 1)
@@ -440,6 +494,10 @@ bool AWarhammer_MapMaker::IsNextTileNumbered(int32 tilePlace)
             return true;
         }
     }
+    else
+    {
+        return true;
+    }
 
     //Try left
     if (col > 0)
@@ -449,6 +507,10 @@ bool AWarhammer_MapMaker::IsNextTileNumbered(int32 tilePlace)
             return true;
         }
     }
+    else
+    {
+        return true;
+    }
 
     //Try right
     if (col < MapSize.X - 1)
@@ -457,6 +519,10 @@ bool AWarhammer_MapMaker::IsNextTileNumbered(int32 tilePlace)
         {
             return true;
         }
+    }
+    else
+    {
+        return true;
     }
 
     return false;
