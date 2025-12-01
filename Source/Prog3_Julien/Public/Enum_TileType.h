@@ -13,5 +13,6 @@ enum class ETileType : uint8
 	Medium			UMETA(DisplayName = "Medium"),
 	High			UMETA(DisplayName = "High"),
 	River			UMETA(DisplayName = "River"),
-	Path			UMETA(DisplayName = "Path")
+	Path			UMETA(DisplayName = "Path"),
+	Decoration		UMETA(DisplayName = "Decoration"),
 };

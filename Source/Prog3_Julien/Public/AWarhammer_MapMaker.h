@@ -55,6 +55,15 @@ public:
 	UPROPERTY(EditAnywhere, meta = (ClampMin = 0, ClampMax = 5), Category = Default)
 	uint8 PathNumber;
 
+	UPROPERTY(EditAnywhere, meta = (ClampMin = 0, ClampMax = 20), Category = Default)
+	uint8 CityClumps;
+
+	UPROPERTY(EditAnywhere, meta = (ClampMin = 0, ClampMax = 20), Category = Default)
+	uint8 ForestClumps;
+
+	UPROPERTY(EditAnywhere, meta = (ClampMin = 0, ClampMax = 1), Category = Default)
+	float RandomStep;
+
 private:
 	UPROPERTY()
 	TArray<FTileRowArray> TileArray;
@@ -118,9 +127,6 @@ private:
 	UFUNCTION()
 	void CreatePath();
 
-	UFUNCTION()
-	void GetAllCenters();
-
 	//Used to get all borders.
 	UFUNCTION()
 	bool IsTileOnBorder(int32 tilePlace);
@@ -132,4 +138,13 @@ private:
 	//Used to get all the best road points.
 	UFUNCTION()
 	void CheckTileAround(int32 tilePlace, int8 bestTile, int8 repetitionLeft, int8 currentCluster);
+
+	UFUNCTION()
+	void SetDecoration();
+
+	UFUNCTION()
+	void SetForestAt(int32 tilePlace, float height);
+
+	UFUNCTION()
+	void SetCityAt(int32 tilePlace, float height, int8 direction);
 };

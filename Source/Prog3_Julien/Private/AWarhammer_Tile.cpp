@@ -13,8 +13,14 @@ AWarhammer_Tile::AWarhammer_Tile()
 	Root = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
 	RootComponent = Root;
 
-	TileMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
+	TileMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("TileMesh"));
 	TileMesh->SetupAttachment(Root);
+
+	DecorationMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Decoration"));
+	DecorationMesh->SetupAttachment(Root);
+	DecorationMesh->SetWorldScale3D(FVector(0.1f, 0.1f, 0.1f));
+	
+	DecorationMesh->SetCanEverAffectNavigation(false);
 
 	TileType = ETileType::None;
 }
@@ -30,7 +36,6 @@ void AWarhammer_Tile::BeginPlay()
 void AWarhammer_Tile::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }
 
 void AWarhammer_Tile::InitTile()
@@ -94,6 +99,22 @@ void AWarhammer_Tile::SetPath()
 	TileType = ETileType::Path;
 }
 
+void AWarhammer_Tile::SetForest(float height)
+{
+	DecorationMesh->SetRelativeLocation(FVector(0, 0, TileMesh->GetRelativeScale3D().Z + height * 50));
+	DecorationMesh->SetRelativeScale3D(FVector(0.75f, 0.75f, height));
+	DecorationMesh->SetMaterial(0, ForestMaterial);
+	TileType = ETileType::Decoration;
+}
+
+void AWarhammer_Tile::SetCity(float height)
+{
+	DecorationMesh->SetRelativeLocation(FVector(0, 0, TileMesh->GetRelativeScale3D().Z + height * 50));
+	DecorationMesh->SetRelativeScale3D(FVector(0.75f, 0.75f, height));
+	DecorationMesh->SetMaterial(0, CityMaterial);
+	TileType = ETileType::Decoration;
+}
+
 void AWarhammer_Tile::DebugShowTile(int8 skin)
 {
 	if (DebugMaterials.Num() == 0)
@@ -141,3 +162,4 @@ void AWarhammer_Tile::SetMaterial(uint8 index)
 
 	TileMesh->SetMaterial(0, MaterialsUsed[index]);
 }
+

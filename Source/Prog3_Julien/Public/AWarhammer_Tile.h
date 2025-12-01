@@ -24,6 +24,9 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	UStaticMeshComponent* TileMesh;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	UStaticMeshComponent* DecorationMesh;
+
 	// Variables
 
 	//Set Here the different Materials (Max: 3)
@@ -38,16 +41,22 @@ public:
 	UMaterialInterface* PathMaterial;
 
 	UPROPERTY(EditAnywhere, Category = Default)
+	UMaterialInterface* ForestMaterial;
+
+	UPROPERTY(EditAnywhere, Category = Default)
+	UMaterialInterface* CityMaterial;
+
+	UPROPERTY(EditAnywhere, Category = Default)
 	TArray<UMaterialInterface*> DebugMaterials;
 
 	UPROPERTY()
 	ETileType TileType;
 
 	UPROPERTY()
-	bool hasBeenChecked;
+	bool HasBeenChecked;
 
 	UPROPERTY()
-	int8 borderDist;
+	int8 BorderDist;
 
 private:
 	
@@ -68,6 +77,12 @@ public:
 
 	UFUNCTION()
 	void SetPath();
+
+	UFUNCTION()
+	void SetForest(float height);
+
+	UFUNCTION()
+	void SetCity(float height);
 
 	UFUNCTION()
 	void DebugShowTile(int8 skin);

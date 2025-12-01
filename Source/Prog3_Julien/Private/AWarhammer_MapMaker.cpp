@@ -62,11 +62,11 @@ void AWarhammer_MapMaker::BuildMap()
     {
         CreateRiver();
     }
-    GetAllCenters();
     for (int i = 0; i < PathNumber; i++)
     {
         CreatePath();
     }
+    SetDecoration();
 }
 
 void AWarhammer_MapMaker::EmptyTileList()
@@ -244,41 +244,7 @@ void AWarhammer_MapMaker::CreateRiver()
     }
 }
 
-//Path is Left -> Right
 void AWarhammer_MapMaker::CreatePath()
-{
-    uint8 PathY = ceilf(roundf(FMath::RandRange(MapSize.Y * 0.1f, MapSize.Y * 0.9f)));
-    uint8 PathX = 0;
-
-    TileArray[PathY].TileRowArray[PathX]->SetPath();
-
-    uint8 random;
-    bool RiverEnded = false;
-    for (int i = 0; i <= 1000 && !RiverEnded; i++)
-    {
-        random = roundf(FMath::RandRange(0, 7));
-        switch (random)
-        {
-        case 0:
-            if (PathY > 0) PathY--;
-            break;
-
-        case 1:
-            if (PathY < MapSize.X - 1) PathY++;
-            break;
-
-        default:
-            PathX++;
-            break;
-        }
-
-        TileArray[PathY].TileRowArray[PathX]->SetPath();
-
-        if (PathX == MapSize.X - 1) RiverEnded = true;
-    }
-}
-
-void AWarhammer_MapMaker::GetAllCenters()
 {
     FString DebugMessage;
 
@@ -307,7 +273,7 @@ void AWarhammer_MapMaker::GetAllCenters()
         {
             borderList.PosArray.Add(i);
             positionArray[i] = -1;
-            GetTileAt(i)->borderDist = 1;
+            GetTileAt(i)->BorderDist = 1;
         }
     }
     TileCenters.Add(borderList);
@@ -333,7 +299,7 @@ void AWarhammer_MapMaker::GetAllCenters()
                 {
                     tempArray.Add(i);
                     positionArray[i] = -1;
-                    GetTileAt(i)->borderDist = currentBorder;
+                    GetTileAt(i)->BorderDist = currentBorder;
                     tileLeft--;
                 }
             }
@@ -355,7 +321,7 @@ void AWarhammer_MapMaker::GetAllCenters()
     for (int k = TileCenters.Num() - 1; k != 3; k--) {
         for (int32 checkPos : TileCenters[k].PosArray)
         {
-            if (not GetTileAt(checkPos)->hasBeenChecked)
+            if (not GetTileAt(checkPos)->HasBeenChecked)
             {
                 CheckTileAround(checkPos, k, 6, cluster);
             }
@@ -378,6 +344,7 @@ void AWarhammer_MapMaker::GetAllCenters()
     //Create Path with fast voxel algorithm
     float tMaxX, tMaxY, tDeltaX, tDeltaY;
     int stepX, stepY, X, Y, endX, endY, dX, dY;
+    int tries;
     for (int j = 0; j < bestPathArray.Num() - 1; j++)
     {
         X = bestPathArray[j] % MapSize.X;
@@ -398,13 +365,16 @@ void AWarhammer_MapMaker::GetAllCenters()
         dX = endX - X;
         dY = endY - Y;
 
+        if (dX < 0) { X = endX; Y = endY; }
+
         tDeltaX = dX == 0 ? 0 : abs(1.0f / dX);
         tDeltaY = dY==0 ? 0 : abs(1.0f/ dY);
 
         tMaxX = tDeltaX;
         tMaxY = tDeltaY;
 
-        while (X != endX || Y != endY) {
+        tries = 0;
+        while ((X != endX || Y != endY) && tries < 500) {
             if (tMaxX < tMaxY) {
                 tMaxX = tMaxX + tDeltaX;
                 X = X + stepX;
@@ -413,8 +383,7 @@ void AWarhammer_MapMaker::GetAllCenters()
                 tMaxY = tMaxY + tDeltaY;
                 Y = Y + stepY;
             }
-            DebugMessage = FString::Printf(TEXT("X = %i; Y = %i || EndX = %i; EndY = %i"), X, Y, endX, endY);
-            MyFunctionList::DebugPrint(DebugMessage, FColor::Yellow);
+            tries++;
             TileArray[Y].TileRowArray[X]->SetPath();
         }
     }
@@ -533,29 +502,24 @@ void AWarhammer_MapMaker::CheckTileAround(int32 tilePlace, int8 best, int8 repet
 {
     AWarhammer_Tile* tile = GetTileAt(tilePlace);
 
-    if (tile->hasBeenChecked) return;
+    if (tile->HasBeenChecked) return;
 
-    FString DebugMessage = FString::Printf(TEXT("Border Dist = %i"), tile->borderDist);
+    FString DebugMessage = FString::Printf(TEXT("Border Dist = %i"), tile->BorderDist);
     MyFunctionList::DebugPrint(DebugMessage, FColor::Yellow);
 
     int row = tilePlace / MapSize.X;
     int col = tilePlace % MapSize.X;
     int i = tilePlace;
 
-    tile->hasBeenChecked = true;
+    tile->HasBeenChecked = true;
 
-    if (tile->borderDist == best )
+    if (tile->BorderDist == best )
     {
         while (bestTiles.Num() <= currentCluster)
         {
             bestTiles.Add(FPosArray());
         }
-
-        DebugMessage = FString::Printf(TEXT("Border Dist = %i"), tile->borderDist);
-        MyFunctionList::DebugPrint(DebugMessage, FColor::Yellow);
         bestTiles[currentCluster].PosArray.Add(tilePlace);
-        DebugMessage = FString::Printf(TEXT("test"));
-        MyFunctionList::DebugPrint(DebugMessage, FColor::Yellow);
     }
 
     if (repetitionLeft == 0) return;
@@ -582,6 +546,158 @@ void AWarhammer_MapMaker::CheckTileAround(int32 tilePlace, int8 best, int8 repet
     if (col < MapSize.X - 1)
     {
         CheckTileAround(i + 1, best, repetitionLeft - 1, currentCluster);
+    }
+
+    return;
+}
+
+void AWarhammer_MapMaker::SetDecoration()
+{
+    FString DebugMessage = FString::Printf(TEXT("Putting Decorations"));
+    MyFunctionList::DebugPrint(DebugMessage, FColor::Yellow);
+
+    int tilePlace;
+    int row;
+    int col;
+    AWarhammer_Tile* tileReference = nullptr;
+    DebugMessage = FString::Printf(TEXT("Creating Forest"));
+    MyFunctionList::DebugPrint(DebugMessage, FColor::Yellow);
+    for (int i = 0; i < ForestClumps; i++)
+    {
+        tileReference = nullptr;
+
+        while (tileReference == nullptr)
+        {
+            row = FMath::RandRange(0, (int)(MapSize.X * 0.5f));
+            col = FMath::RandRange(0, MapSize.Y - 1);
+            tilePlace = col * MapSize.X + row;
+            DebugMessage = FString::Printf(TEXT("DECORATION::Col = %i; Row = %i"), col, row);
+            MyFunctionList::DebugPrint(DebugMessage, FColor::Yellow);
+            tileReference = GetTileAt(tilePlace);
+            if (tileReference->TileType != ETileType::Low && tileReference->TileType != ETileType::Medium && tileReference->TileType != ETileType::High)
+            {
+                tileReference = nullptr;
+            } 
+        }
+
+        SetForestAt(tilePlace, FMath::FRandRange(1.0f, 3.0f));
+    }
+
+    DebugMessage = FString::Printf(TEXT("Creating City"));
+    MyFunctionList::DebugPrint(DebugMessage, FColor::Yellow);
+    for (int i = 0; i < CityClumps; i++)
+    {
+        tileReference = nullptr;
+
+        while (tileReference == nullptr)
+        {
+            row = FMath::RandRange(0, (int)(MapSize.X * 0.5f));
+            col = FMath::RandRange(1, (int)(MapSize.Y));
+            tilePlace = col * MapSize.X - row;
+            tileReference = GetTileAt(tilePlace);
+            if (tileReference->TileType != ETileType::Low && tileReference->TileType != ETileType::Medium && tileReference->TileType != ETileType::High)
+            {
+                tileReference = nullptr;
+            }
+        }
+
+        SetCityAt(tilePlace, FMath::FRandRange(1.5f, 4.5f), 0);
+    }
+}
+
+void AWarhammer_MapMaker::SetForestAt(int32 tilePlace, float height)
+{
+    AWarhammer_Tile* tile = GetTileAt(tilePlace);
+    ETileType tileType = tile->TileType;
+
+    int row = tilePlace / MapSize.X;
+    int col = tilePlace % MapSize.X;
+
+    FString DebugMessage = FString::Printf(TEXT("DECORATION::Col = %i; Row = %i"), col, row);
+    MyFunctionList::DebugPrint(DebugMessage, FColor::Yellow);
+
+    if (tileType != ETileType::Low && tileType != ETileType::Medium && tileType != ETileType::High)
+    {
+        return;
+    }
+
+    tile->SetForest(height);
+    float rand;
+
+    //Try up
+    if (row > 0)
+    {
+        rand = FMath::FRand();
+        if (rand > RandomStep) SetForestAt(tilePlace - MapSize.X, height);
+    }
+
+    //Try down
+    if (row < MapSize.Y - 1)
+    {
+        rand = FMath::FRand();
+        if (rand > RandomStep) SetForestAt(tilePlace + MapSize.X, height);
+    }
+
+    //Try left
+    if (col > 0)
+    {
+        rand = FMath::FRand();
+        if (rand > RandomStep) SetForestAt(tilePlace - 1, height);
+    }
+
+    //Try right
+    if (col < MapSize.X - 1)
+    {
+        rand = FMath::FRand();
+        if (rand > RandomStep) SetForestAt(tilePlace + 1, height);
+    }
+
+    return;
+}
+
+void AWarhammer_MapMaker::SetCityAt(int32 tilePlace, float height, int8 direction)
+{
+    //0 = Center; 1 = North; 2 = South; 3 = West; 4 = East
+    AWarhammer_Tile* tile = GetTileAt(tilePlace);
+    ETileType tileType = tile->TileType;
+
+    int row = tilePlace / MapSize.X;
+    int col = tilePlace % MapSize.X;
+
+    if (tileType != ETileType::Low && tileType != ETileType::Medium && tileType != ETileType::High)
+    {
+        return;
+    }
+
+    tile->SetCity(height);
+    float rand;
+
+    //Try up
+    if (row > 0 && (direction == 0 || direction == 1))
+    {
+        rand = (direction == 0 ? 1 : FMath::FRand());
+        if(rand > RandomStep) SetCityAt(tilePlace - MapSize.X, height, 1);
+    }
+
+    //Try down
+    if (row < MapSize.Y - 1 && (direction == 0 || direction == 2))
+    {
+        rand = (direction == 0 ? 1 : FMath::FRand());
+        if (rand > RandomStep) SetCityAt(tilePlace + MapSize.X, height, 2);
+    }
+
+    //Try left
+    if (col > 0 && (direction == 0 || direction == 3))
+    {
+        rand = (direction == 0 ? 1 : FMath::FRand());
+        if (rand > RandomStep) SetCityAt(tilePlace - 1, height, 3);
+    }
+
+    //Try right
+    if (col < MapSize.X - 1 && (direction == 0 || direction == 4))
+    {
+        rand = (direction == 0 ? 1 : FMath::FRand());
+        if (rand > RandomStep) SetCityAt(tilePlace + 1, height, 4);
     }
 
     return;
